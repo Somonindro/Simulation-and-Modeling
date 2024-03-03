@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Chart.js Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <canvas id="myChart"></canvas>
+  <script>
+
+    let numberOfSimulations = 10000;
+    let numberOfPeople = 100;
+
+    let ranks = Array.from({ length: numberOfPeople }, (_, i) => i + 1);
+    ranks.sort(() => Math.random() - 0.5);
+    console.log(ranks, ranks.length);
+
+    let successCount = {
+      "top1": Array(numberOfPeople).fill(0),
+      "top3": Array(numberOfPeople).fill(0),
+      "top5": Array(numberOfPeople).fill(0),
+      "top10": Array(numberOfPeople).fill(0)
+    };
+
+    function argPartition(array, k) {
+      let arrWithIndices = array.map((val, index) => [val, index]);
+      let sortedArrWithIndices = arrWithIndices.sort((a, b) => a[0] - b[0]);
+      return sortedArrWithIndices.slice(0, k).map(item => item[1]);
+    }
+
+
+    for (let simId = 0; simId < numberOfSimulations; simId++) {
+      ranks.sort(() => Math.random() - 0.5);
+
+      let top1 = argPartition(ranks, 1);
+      let top3 = argPartition(ranks, 3);
+      let top5 = argPartition(ranks, 5);
+      let top10 = argPartition(ranks, 10);
+
+      let topCombined = top1.concat(top3, top5, top10);
+
+      for (let subsetIndex = 0; subsetIndex < numberOfPeople; subsetIndex++) {
+        let minRank = 100;
+        let subset = ranks.slice(0, subsetIndex);
+        minRank = subset.length > 0 ? Math.min(...subset) : minRank;
+        let remaining = ranks.slice(subsetIndex);
+
+        let indices = remaining.reduce((arr, e, i) => e < minRank ? arr.concat(i) : arr, []);
+        let minIndex = subsetIndex;
+        if (indices.length > 0) {
+          minIndex = indices[0] + subsetIndex;
+        }
+
+        let counts = topCombined.filter(e => e === minIndex).length;
+
+        successCount["top1"][subsetIndex] += (counts === 4) ? 1 : 0;
+        successCount["top3"][subsetIndex] += (counts >= 3) ? 1 : 0;
+        successCount["top5"][subsetIndex] += (counts >= 2) ? 1 : 0;
+        successCount["top10"][subsetIndex] += (counts >= 1) ? 1 : 0;
+      }
+    }
+
+    console.log(successCount);
+
+
+    let ctx = document.getElementById('myChart').getContext('2d');
+    let myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Array.from({ length: 100 }, (_, i) => i + 1),  // Sample sizes
+        datasets: [{
+          label: 'Top 1 Success Rate',
+          data: Array.from({ length: 100 }, (_, i) => successCount["top1"][i] / numberOfSimulations),  // Success rates for top 1
+          borderColor: 'rgba(75, 192, 192, 1)',
+          fill: false
+        }, {
+          label: 'Top 3 Success Rate',
+          data: Array.from({ length: 100 }, (_, i) => successCount["top3"][i] / numberOfSimulations),  // Success rates for top 3
+          borderColor: 'rgba(192, 75, 75, 1)',
+          fill: false
+        }, {
+          label: 'Top 5 Success Rate',
+          data: Array.from({ length: 100 }, (_, i) => successCount["top5"][i] / numberOfSimulations),  // Success rates for top 5
+          borderColor: 'rgba(75, 75, 192, 1)',
+          fill: false
+        }, {
+          label: 'Top 10 Success Rate',
+          data: Array.from({ length: 100 }, (_, i) => successCount["top10"][i] / numberOfSimulations),  // Success rates for top 10
+          borderColor: 'rgba(192, 192, 75, 1)',
+          fill: false
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+  </script>
+</body>
+
+</html>
