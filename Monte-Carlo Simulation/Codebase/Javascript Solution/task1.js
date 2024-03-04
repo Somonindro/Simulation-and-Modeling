@@ -54,7 +54,7 @@ countsForEachGeneration = countsForEachGeneration.map(subArray =>
 for (let generation in countsForEachGeneration) {
   console.log("Generation "+ generation + ":");
   countsForEachGeneration[generation].forEach((value, i) => {
-      console.log(p[${i}] = ${value});
+      console.log(`p[${i}] = ${value}`);
   });
   console.log();
 }
